@@ -10,8 +10,7 @@ import (
 )
 
 const (
-	BASEURL = "http://yetibellyblue.com"
-	cookie  = "username=\"CBE36F19-C684-4E6A-B21C-7904B955C024\"; cookie=\"MJNr1Sfq89FDj2lsHo9bOrvUvJmQtw3/yYURbfcbG/db6yqe4fdtKppRhZeQbC4etAdjvSUHGJ80YKnWBeuRTA==\""
+	PHOTOBOOTH_BASEURL = "http://yetibellyblue.com"
 )
 
 var (
@@ -76,9 +75,9 @@ func (l *Listener) listen() {
 
 func (l *Listener) getLastPicture() int {
 
-	url := fmt.Sprintf("%s/getEventData?eventcode=%s", BASEURL, l.event)
+	url := fmt.Sprintf("%s/getEventData?eventcode=%s", PHOTOBOOTH_BASEURL, l.event)
 	req, _ := http.NewRequest("POST", url, nil)
-	req.Header.Add("Cookie", cookie)
+	req.Header.Add("Cookie", COOKIE)
 	res, err := httpClient.Do(req)
 
 	if err == nil {
