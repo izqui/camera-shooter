@@ -17,20 +17,24 @@ var (
 	httpClient = &http.Client{}
 )
 
-type LastPictureCallback chan int
-type Listener struct {
-	Interval  time.Duration
+type CallbackData struct{ Start, End int }
+
+type LastPictureCallback chan CallbackData
+
+type PhotoboothListener struct {
+	Interval time.Duration
+
+	Event string
+
 	LastValue int
 	callback  LastPictureCallback
-	event     string
 	listening bool
 }
 
-func (l *Listener) ListenForChangesInEvent(event string, cb LastPictureCallback) {
+func (l *PhotoboothListener) ListenForChanges(cb LastPictureCallback) {
 
 	l.callback = cb
 	l.listening = true
-	l.event = event
 
 	if l.Interval == 0 {
 		l.Interval = 15 * time.Second
@@ -38,16 +42,16 @@ func (l *Listener) ListenForChangesInEvent(event string, cb LastPictureCallback)
 
 	l.LastValue = -1
 
-	fmt.Println("Listening for Photobooth:", l.event, "every", l.Interval)
+	fmt.Println("Listening for Photobooth:", l.Event, "every", l.Interval)
 	go l.listen()
 }
 
-func (l *Listener) StopListening() {
+func (l *PhotoboothListener) StopListening() {
 
 	l.listening = false
 }
 
-func (l *Listener) listen() {
+func (l *PhotoboothListener) listen() {
 
 	for l.listening {
 
@@ -63,8 +67,9 @@ func (l *Listener) listen() {
 
 				if i > l.LastValue {
 
+					l.callback <- CallbackData{Start: l.LastValue, End: i}
 					l.LastValue = i
-					l.callback <- i
+
 				}
 			}
 		}
@@ -73,9 +78,9 @@ func (l *Listener) listen() {
 	}
 }
 
-func (l *Listener) getLastPicture() int {
+func (l *PhotoboothListener) getLastPicture() int {
 
-	url := fmt.Sprintf("%s/getEventData?eventcode=%s", PHOTOBOOTH_BASEURL, l.event)
+	url := fmt.Sprintf("%s/getEventData?eventcode=%s", PHOTOBOOTH_BASEURL, l.Event)
 	req, _ := http.NewRequest("POST", url, nil)
 	req.Header.Add("Cookie", COOKIE)
 	res, err := httpClient.Do(req)

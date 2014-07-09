@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"time"
 )
 
@@ -11,31 +10,44 @@ var (
 	directoryCode = flag.String("directory", "IIDSJ7YNOO32UPW5T5QWFDX33CIMTQYY", "Directory code for amazon")
 	zulipStream   = flag.String("zulipStream", "test-stream", "Stream for messages")
 	zulipSubject  = flag.String("zulipSubject", "photobooth", "Subject for messages")
-	listener      = &Listener{}
+	listener      = &PhotoboothListener{}
+	imager        = &AmazonImageHandler{}
 	zulip         = &ZulipBot{}
 )
 
 func init() {
 
 	flag.Parse()
+
 	zulip.Stream = *zulipStream
 	zulip.Subject = *zulipSubject
+
+	listener.Event = *eventCode
+
+	imager.Directory = *directoryCode
 }
 
 func main() {
 
-	var callback = make(LastPictureCallback)
+	var listenerCallback = make(LastPictureCallback)
+	var imagerCallback = make(MarkdownImageTextCallback)
 
 	listener.Interval = 3 * time.Second
-	listener.ListenForChangesInEvent(*eventCode, callback)
+	listener.ListenForChanges(listenerCallback)
+
+	imager.Callback = imagerCallback
+
+	//imager.GetImageMarkdownRepresentation(CallbackData{Start: 40, End: 55})
 
 	for {
 
 		select {
 
-		case i := <-callback:
+		case d := <-listenerCallback:
+			imager.GetImageMarkdownRepresentation(d)
 
-			zulip.SendMessage(fmt.Sprintf("New picture %d", i))
+		case m := <-imagerCallback:
+			zulip.SendMessage(m)
 		}
 	}
 }
