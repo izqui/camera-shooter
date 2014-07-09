@@ -6,11 +6,14 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"time"
 )
 
 const (
 	port = ":8080"
 )
+
+var blocked = false
 
 func main() {
 
@@ -22,16 +25,27 @@ func main() {
 
 func httpHandler(w http.ResponseWriter, r *http.Request) {
 
-	fmt.Println("request")
+	if blocked {
 
-	cmd := exec.Command("sh", "/home/pi/camera/picture.sh")
-	_, err := cmd.Output()
+		http.Error(w, http.StatusText(503), 503)
 
-	if err == nil {
+	} else {
 
-		file, err := os.Open("/home/pi/camera/pic.jpg")
+		blocked = true
 
-		if err == nil {
+		cmd := exec.Command("sh", "/home/pi/camera/picture.sh")
+		go cmd.Output()
+
+		fileCb := make(chan *os.File)
+		timeoutCb := make(chan bool)
+
+		go monitorFile("/home/pi/camera/pic.jpg", fileCb, timeoutCb)
+
+		select {
+
+		case file := <-fileCb:
+
+			fmt.Println("got file back")
 
 			buf := make([]byte, 1024*1024*10)
 
@@ -61,18 +75,37 @@ func httpHandler(w http.ResponseWriter, r *http.Request) {
 			}
 
 			w.Header().Set("Content-Type", "image/jpg")
+			blocked = false
 
-		} else {
+		case <-timeoutCb:
 
-			panic(err)
+			blocked = false
+			http.Error(w, http.StatusText(500), 500)
 		}
-		defer func() {
+	}
+}
 
-			if err := file.Close(); err != nil {
+func monitorFile(file string, cb chan *os.File, timeout chan bool) {
 
-				panic(err)
-			}
-		}()
+	ttl := 50
 
+	for {
+
+		if ttl == 0 {
+
+			timeout <- true
+		}
+
+		time.Sleep(100 * time.Millisecond)
+		file, err := os.Open("/home/pi/camera/pic.jpg")
+
+		if err == nil && file != nil {
+
+			defer file.Close()
+
+			cb <- file
+		}
+
+		ttl -= 1
 	}
 }
