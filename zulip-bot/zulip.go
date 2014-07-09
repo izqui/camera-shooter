@@ -34,7 +34,7 @@ func (z *ZulipBot) SendMessage(message string) error {
 
 	req, _ := http.NewRequest("POST", urlstr, nil)
 	req.Header.Add("Authorization", authHeader())
-	res, err := zulipHttpClient.Do(req)
+	_, err := zulipHttpClient.Do(req)
 
 	return err
 

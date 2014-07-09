@@ -26,10 +26,8 @@ func main() {
 
 	var callback = make(LastPictureCallback)
 
-	listener.Interval = 10 * time.Second
+	listener.Interval = 3 * time.Second
 	listener.ListenForChangesInEvent(*eventCode, callback)
-
-	fmt.Println(zulip.SendMessage("the Test"))
 
 	for {
 
@@ -37,7 +35,7 @@ func main() {
 
 		case i := <-callback:
 
-			fmt.Println("Changed", i)
+			zulip.SendMessage(fmt.Sprintf("New picture %d", i))
 		}
 	}
 }
