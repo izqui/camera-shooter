@@ -33,7 +33,7 @@ func httpHandler(w http.ResponseWriter, r *http.Request) {
 
 		blocked = true
 
-		cmd := exec.Command("sh", "/home/pi/camera/picture.sh")
+		cmd := exec.Command("sh", "/home/pi/camera/picture")
 		go cmd.Output()
 
 		fileCb := make(chan *os.File)
