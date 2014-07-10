@@ -57,6 +57,8 @@ func (l *PhotoboothListener) listen() {
 
 		i := l.getLastPicture()
 
+		fmt.Println(i)
+
 		if i > -1 {
 
 			if l.LastValue < 0 {

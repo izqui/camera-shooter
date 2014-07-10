@@ -6,13 +6,14 @@ import (
 )
 
 var (
-	eventCode     = flag.String("event", "nG8z3q", "Event code for server")
-	directoryCode = flag.String("directory", "IIDSJ7YNOO32UPW5T5QWFDX33CIMTQYY", "Directory code for amazon")
-	zulipStream   = flag.String("zulipStream", "test-stream", "Stream for messages")
-	zulipSubject  = flag.String("zulipSubject", "photobooth", "Subject for messages")
-	listener      = &PhotoboothListener{}
-	imager        = &AmazonImageHandler{}
-	zulip         = &ZulipBot{}
+	eventCode      = flag.String("event", "s9pgpX", "Event code for server")
+	directoryCode  = flag.String("directory", "HT6HWWY7KWVNHCWMTWXMYXRVFXUTJXZZ", "Directory code for amazon")
+	zulipStream    = flag.String("zulipStream", "test-stream", "Stream for messages")
+	zulipSubject   = flag.String("zulipSubject", "photobooth", "Subject for messages")
+	listenInterval = flag.Int("interval", 60, "time interval to listen on server")
+	listener       = &PhotoboothListener{}
+	imager         = &AmazonImageHandler{}
+	zulip          = &ZulipBot{}
 )
 
 func init() {
@@ -32,7 +33,9 @@ func main() {
 	var listenerCallback = make(LastPictureCallback)
 	var imagerCallback = make(MarkdownImageTextCallback)
 
-	listener.Interval = 3 * time.Second
+	i := time.Duration(*listenInterval)
+	listener.Interval = time.Second * i
+
 	listener.ListenForChanges(listenerCallback)
 
 	imager.Callback = imagerCallback
@@ -44,6 +47,7 @@ func main() {
 		select {
 
 		case d := <-listenerCallback:
+
 			imager.GetImageMarkdownRepresentation(d)
 
 		case m := <-imagerCallback:
