@@ -35,7 +35,6 @@ func main() {
 
 	i := time.Duration(*listenInterval)
 	listener.Interval = time.Second * i
-
 	listener.ListenForChanges(listenerCallback)
 
 	imager.Callback = imagerCallback
